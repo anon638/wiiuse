@@ -40,6 +40,12 @@
 extern "C" {
 #endif
 
+struct wiiuse_connect_data_t {
+    int ret;
+    struct wiimote_t * wiimote;
+    pthread_t thread_id;
+};
+
 /** @defgroup internal_io Internal: Platform-specific Device I/O */
 /** @{ */
 void wiiuse_init_platform_fields(struct wiimote_t *wm);

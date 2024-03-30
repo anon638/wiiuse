@@ -148,6 +148,16 @@ int wiiuse_os_find(struct wiimote_t **wm, int max_wiimotes, int timeout)
 }
 
 /**
+ *	@brief pthread-compatible wrapper for wiiuse_os_connect_single.
+ *
+ *	@param wd		Pointer to a wiimote_connect_data_t structure.
+ *
+ */
+void wiiuse_os_connect_threaded(struct wiiuse_connect_data_t *wd) {
+    wd->ret = wiiuse_os_connect_single(wd->wiimote, NULL);
+}
+
+/**
  *	@see wiiuse_connect()
  *	@see wiiuse_os_connect_single()
  */
@@ -185,16 +195,6 @@ int wiiuse_os_connect(struct wiimote_t **wm, int wiimotes)
     }
 
     return connected;
-}
-
-/**
- *	@brief pthread-compatible wrapper for wiiuse_os_connect_single.
- *
- *	@param wd		Pointer to a wiimote_connect_data_t structure.
- *
- */
-void wiiuse_os_connect_threaded(struct wiiuse_connect_data_t *wd) {
-    wd->ret = wiiuse_os_connect_single(wd->wiimote, NULL);
 }
 
 /**

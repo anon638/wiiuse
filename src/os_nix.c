@@ -51,6 +51,7 @@
 #include <sys/time.h>   /* for struct timeval */
 #include <time.h>       /* for clock_gettime */
 #include <unistd.h>     /* for close, write */
+#include <pthread.h>    /* for multithreaded connections */
 
 static int wiiuse_os_connect_single(struct wiimote_t *wm, char *address);
 
@@ -152,10 +153,14 @@ int wiiuse_os_find(struct wiimote_t **wm, int max_wiimotes, int timeout)
  */
 int wiiuse_os_connect(struct wiimote_t **wm, int wiimotes)
 {
+{
+    struct wiiuse_connect_data_t wd[wiimotes];
+    int wd_len = 0;
+
     int connected = 0;
     int i         = 0;
 
-    for (; i < wiimotes; ++i)
+    for (i = 0; i < wiimotes; ++i)
     {
         if (!WIIMOTE_IS_SET(wm[i], WIIMOTE_STATE_DEV_FOUND))
         /* if the device address is not set, skip it */
@@ -163,13 +168,33 @@ int wiiuse_os_connect(struct wiimote_t **wm, int wiimotes)
             continue;
         }
 
-        if (wiiuse_os_connect_single(wm[i], NULL))
+        wd[wd_len].wiimote = wm[i];
+        wd[wd_len].ret = 0;
+
+        pthread_create(&(wd[wd_len].thread_id), NULL, &wiiuse_os_connect_threaded, &(wd[wd_len]));
+        wd_len ++;
+    }
+
+    for (i = 0; i < wd_len; ++i) {
+        pthread_join(wd[i].thread_id, NULL);
+
+        if (wd[i].ret)
         {
             ++connected;
         }
     }
 
     return connected;
+}
+
+/**
+ *	@brief pthread-compatible wrapper for wiiuse_os_connect_single.
+ *
+ *	@param wd		Pointer to a wiimote_connect_data_t structure.
+ *
+ */
+void wiiuse_os_connect_threaded(struct wiiuse_connect_data_t *wd) {
+    wd->ret = wiiuse_os_connect_single(wd->wiimote, NULL);
 }
 
 /**
